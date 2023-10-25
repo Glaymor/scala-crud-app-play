@@ -1,7 +1,7 @@
-GET                     /allMovies                         controllers.MovieController.getAll()
-GET                     /someMovie               controllers.MovieController.getById(movieId: Long)
+GET                     /allMovies                     controllers.MovieController.getAll()
+GET                     /someMovie                     controllers.MovieController.getById(movieId: Long)
 
-PUT                     /movies/change/:movieId:newName         controllers.MovieController.changeNameById(movieId: Long, newName: String)
-DELETE                  /movies/delete/:movieId                controllers.MovieController.deleteById(movieId: Long)
+PUT                     /movies/change/                controllers.MovieController.changeNameById(movieId: Long, newName: String)
+DELETE                  /movies/delete/                controllers.MovieController.deleteById(movieId: Long)
 
-POST                    /movies                         controllers.MovieController.addNewItem()
+POST                    /movies                        controllers.MovieController.addNewItem()
