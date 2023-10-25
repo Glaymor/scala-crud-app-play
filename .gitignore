@@ -1,0 +1,7 @@
+target
+/.bsp
+/.idea
+/logs
+/public
+/test
+/RUNNING_PID
