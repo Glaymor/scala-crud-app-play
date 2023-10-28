@@ -1,83 +1,75 @@
 package controllers
 
-import models.{MovieListItem, NewMovieListItem}
-import play.api.libs.json._
+import models.{Movie, NewMovie}
 import play.api.mvc._
+import services.MovieService
 
 import javax.inject._
-import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, ExecutionContext}
+import play.api.libs.json._
+
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 @Singleton
-class MovieController @Inject()(val controllerComponents: ControllerComponents)
+class MovieController @Inject()(val movieService: MovieService, val controllerComponents: ControllerComponents)(implicit val ec: ExecutionContext)
   extends BaseController {
 
-  implicit val moviesListJson: OFormat[MovieListItem] = Json.format[MovieListItem]
-  implicit val newMoviesListJson: OFormat[NewMovieListItem] = Json.format[NewMovieListItem]
-
-
-  private val moviesList = new ListBuffer[MovieListItem]()
-
+  implicit val ListJson: OFormat[Movie] = Json.format[Movie]
+  implicit val newListJson: OFormat[NewMovie] = Json.format[NewMovie]
 
   def getAll: Action[AnyContent] = Action {
-    if (moviesList.isEmpty) {
-      NoContent
-    } else {
-      Ok(Json.toJson(moviesList))
-    }
+    val result = Await.result(movieService.getAll, 1 minute)
+    Ok(Json.toJson(result.toList))
   }
 
-  def getById(movieId: Long): Action[AnyContent] = Action {
-    val foundItem = moviesList.find(_.id == movieId)
-    foundItem match {
-      case Some(item) => Ok(Json.toJson(item))
+  def get(id: Int): Action[AnyContent] = Action {
+    val result = Await.result(movieService.get(id), 1 minute)
+    result match {
+      case Some(movie) => Ok(Json.toJson(movie))
       case None => NotFound
     }
   }
 
-  def addNewItem(): Action[AnyContent] = Action { implicit request =>
+  def add: Action[AnyContent] = Action { implicit request =>
     val content = request.body
     val jsonObject = content.asJson
-    val movieListItem: Option[NewMovieListItem] =
-      jsonObject.flatMap(
-        Json.fromJson[NewMovieListItem](_).asOpt
-      )
+    val newMovie: Option[NewMovie] = jsonObject.flatMap(
+      Json.fromJson[NewMovie](_).asOpt
+    )
 
-    movieListItem match {
-      case Some(newItem) =>
-        val nextId = moviesList.map(_.id).max + 1
-        val toBeAdded = MovieListItem(nextId, newItem.name)
-        moviesList += toBeAdded
-        Created(Json.toJson(toBeAdded))
+    newMovie match {
+      case Some(newMovie) => {
+        val movie = Movie(1, newMovie.name)
+        val newId = Await.result(movieService.add(movie), 1 minute)
+        Ok(Json.toJson(Movie(newId, newMovie.name)))
+      }
       case None => BadRequest
     }
   }
 
-  def changeNameById(movieId: Long, newName: String): Action[AnyContent] = Action {
-    val foundItem = moviesList.find(_.id == movieId)
-    foundItem match {
-      case Some(item) =>
-        val newItem = item.copy(name = newName)
-        moviesList.remove(item.id.toInt)
-        moviesList += newItem
-        Ok(Json.toJson(newItem))
-      case None => NotFound
-    }
-
-  }
-
-  def deleteById(movieId: Long): Action[AnyContent] = Action {
-    val foundItem = moviesList.find(_.id == movieId)
-    foundItem match {
-      case Some(item) =>
-        moviesList.remove(item.id.toInt)
-
-        if (moviesList.isEmpty) {
-          NoContent
-        } else {
-          Ok(Json.toJson(moviesList))
-        }
-      case None => NotFound
+  def delete(id: Int): Action[AnyContent] = Action {
+    val res = Await.result(movieService.delete(id), 1 minute)
+    res match {
+      case 1 => Ok(Json.toJson("Successfully"))
+      case _ => BadRequest
     }
   }
 
+  def update(id: Int): Action[AnyContent] = Action { implicit request =>
+    val content = request.body
+    val jsonObject = content.asJson
+    val newMovie: Option[NewMovie] = jsonObject.flatMap(
+      Json.fromJson[NewMovie](_).asOpt
+    )
+
+    newMovie match {
+      case Some(newMovie) => {
+        val movie = Movie(id, newMovie.name)
+        Await.result(movieService.update(id, movie), 1 minute)
+        Ok(Json.toJson(movie))
+      }
+      case None => BadRequest
+    }
+  }
 }
