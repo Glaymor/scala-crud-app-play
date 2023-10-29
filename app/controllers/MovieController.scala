@@ -39,11 +39,13 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
     )
 
     newMovie match {
-      case Some(newMovie) => {
+      case Some(newMovie) =>
         val movie = Movie(1, newMovie.name)
-        val newId = Await.result(movieService.add(movie), 1 minute)
-        Ok(Json.toJson(Movie(newId, newMovie.name)))
-      }
+        val result = Await.result(movieService.add(movie), 1 minute)
+        result match {
+          case 1 => Ok(Json.toJson("Successfully"))
+          case _ => BadRequest
+        }
       case None => BadRequest
     }
   }
@@ -64,11 +66,10 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
     )
 
     newMovie match {
-      case Some(newMovie) => {
+      case Some(newMovie) =>
         val movie = Movie(id, newMovie.name)
         Await.result(movieService.update(id, movie), 1 minute)
         Ok(Json.toJson(movie))
-      }
       case None => BadRequest
     }
   }
