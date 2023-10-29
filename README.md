@@ -13,4 +13,14 @@ Postres
 
 conf/routes Файл маршрутов, который сопоставляет запрос методу контроллера.
 
+Добавление нового элемента
+
+![image](https://github.com/Glaymor/scala-crud-app-play/assets/91942559/3ff026f3-94ee-416e-83ab-55c07ec9d563)
+
+Получение всех элементов
+
+![image](https://github.com/Glaymor/scala-crud-app-play/assets/91942559/a78b7326-8c24-4ae2-8355-31d896f67be4)
+
+
+
 
