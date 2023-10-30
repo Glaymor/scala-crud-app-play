@@ -18,6 +18,10 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
   implicit val ListJson: OFormat[Movie] = Json.format[Movie]
   implicit val newListJson: OFormat[NewMovie] = Json.format[NewMovie]
 
+  def info: Action[AnyContent] = Action {
+    Ok(views.html.info())
+  }
+
   def getAll: Action[AnyContent] = Action {
     val result = Await.result(movieService.getAll, 1 minute)
     Ok(Json.toJson(result.toList))

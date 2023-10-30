@@ -1,3 +1,5 @@
+GET                     /                             controllers.MovieController.info
+
 
 GET                     /allMovies                    controllers.MovieController.getAll
 GET                     /someMovie                    controllers.MovieController.get(id: Int)
