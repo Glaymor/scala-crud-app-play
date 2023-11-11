@@ -1,18 +1,18 @@
 package controllers
 
 import models.{Movie, NewMovie}
+import play.api.libs.json._
 import play.api.mvc._
 import services.MovieService
 
 import javax.inject._
-import scala.concurrent.{Await, ExecutionContext}
-import play.api.libs.json._
-
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 @Singleton
-class MovieController @Inject()(val movieService: MovieService, val controllerComponents: ControllerComponents)(implicit val ec: ExecutionContext)
+class MovieController @Inject()(val movieService: MovieService,
+                                val controllerComponents: ControllerComponents)
+                               (implicit val ec: ExecutionContext)
   extends BaseController {
 
   implicit val ListJson: OFormat[Movie] = Json.format[Movie]
@@ -22,20 +22,20 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
     Ok(views.html.info())
   }
 
-  def getAll: Action[AnyContent] = Action {
-    val result = Await.result(movieService.getAll, 1 minute)
-    Ok(Json.toJson(result.toList))
+  def getAll: Action[AnyContent] = Action.async {
+    movieService.getAll.map{
+      movie => Ok(Json.toJson(movie))
+    }
   }
 
-  def get(id: Int): Action[AnyContent] = Action {
-    val result = Await.result(movieService.get(id), 1 minute)
-    result match {
+  def get(id: Int): Action[AnyContent] = Action.async {
+    movieService.get(id).map {
       case Some(movie) => Ok(Json.toJson(movie))
       case None => NotFound
     }
   }
 
-  def add: Action[AnyContent] = Action { implicit request =>
+  def add: Action[AnyContent] = Action.async { implicit request =>
     val content = request.body
     val jsonObject = content.asJson
     val newMovie: Option[NewMovie] = jsonObject.flatMap(
@@ -45,24 +45,22 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
     newMovie match {
       case Some(newMovie) =>
         val movie = Movie(1, newMovie.name)
-        val result = Await.result(movieService.add(movie), 1 minute)
-        result match {
+        movieService.add(movie).map{
           case 1 => Ok(Json.toJson("Successfully"))
           case _ => BadRequest
         }
-      case None => BadRequest
+      case None => Future{BadRequest}
     }
   }
 
-  def delete(id: Int): Action[AnyContent] = Action {
-    val res = Await.result(movieService.delete(id), 1 minute)
-    res match {
+  def delete(id: Int): Action[AnyContent] = Action.async {
+    movieService.delete(id).map{
       case 1 => Ok(Json.toJson("Successfully"))
       case _ => BadRequest
     }
   }
 
-  def update(id: Int): Action[AnyContent] = Action { implicit request =>
+  def update(id: Int): Action[AnyContent] = Action.async { implicit request =>
     val content = request.body
     val jsonObject = content.asJson
     val newMovie: Option[NewMovie] = jsonObject.flatMap(
@@ -72,9 +70,11 @@ class MovieController @Inject()(val movieService: MovieService, val controllerCo
     newMovie match {
       case Some(newMovie) =>
         val movie = Movie(id, newMovie.name)
-        Await.result(movieService.update(id, movie), 1 minute)
-        Ok(Json.toJson(movie))
-      case None => BadRequest
+        movieService.update(id, movie).map {
+          case 1 => Ok(Json.toJson(movie))
+          case _ => BadRequest
+        }
+      case None => Future{BadRequest}
     }
   }
 }
