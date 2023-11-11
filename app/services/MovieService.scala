@@ -6,16 +6,8 @@ import repositories.MovieRepository
 import javax.inject.Inject
 import scala.concurrent.Future
 
-trait Service {
-  def get(id: Int): Future[Option[Movie]]
-  def add(movie: Movie): Future[Int]
-  def update(movieId: Int, movie: Movie): Future[Int]
-  def delete(movieId: Int): Future[Int]
-  def getAll: Future[Seq[Movie]]
-}
 
-
-class MovieService@Inject()(val repository: MovieRepository) extends Service {
+class MovieService@Inject()(val repository: MovieRepository) extends Service[Movie] {
 
   override def get(id: Int): Future[Option[Movie]] = repository.get(id)
 

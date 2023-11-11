@@ -7,7 +7,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class MovieRepository@Inject()()(implicit val ec: ExecutionContext) {
+class MovieRepository@Inject()()(implicit val ec: ExecutionContext) extends Repository[Movie] {
 
   import slick.jdbc.PostgresProfile.api._
 
